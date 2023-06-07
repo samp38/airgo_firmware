@@ -3,13 +3,15 @@
 #include "bsp.h"
 
 // Globals
-bool run_interrupt = false;
+static volatile int run_interrupt = 0;
+
 
 int write_state(uint8_t state) {
-    if (state != 0 || state != 1) {
-        Serial.println("State write in EEPROM with not allowd value");
-        return 1;
-    }
+    // if (state != 0 || state != 1) {
+    //     Serial.println(state);
+    //     Serial.println("State write in EEPROM with not allowed value");
+    //     return 1;
+    // }
     EEPROM.update(0, state);
     return 0;
 }
@@ -53,11 +55,13 @@ void motor_drive(float speed) {
 }
 
 void trig_interrupt(){
-    run_interrupt = true;
+    run_interrupt = 1;
 }
 
 void interrupt_routine() {
-    run_interrupt = false;
+    detachInterrupt(0);
+    run_interrupt = 0;
+    Serial.println(read_state());
     if (read_state() == 0) {
         Serial.println("extending");
         motor_drive(100);
@@ -68,6 +72,9 @@ void interrupt_routine() {
         motor_drive(-100);
         write_state(0);
     }
+    delay(500);
+    attachInterrupt(0, trig_interrupt, FALLING);
+    run_interrupt = 0;
 }
 
 void setup() {
@@ -87,5 +94,6 @@ void setup() {
 void loop() {
     if (run_interrupt) {
         interrupt_routine();
+        interrupts();
     }
 }
