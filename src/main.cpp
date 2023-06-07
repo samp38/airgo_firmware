@@ -4,6 +4,7 @@
 
 // Globals
 uint8_t global_state; // address 0x00
+bool run_interrupt = false;
 
 int write_state(int state) {
     if (state != 0 || state != 1) {
@@ -52,6 +53,21 @@ void motor_drive(float speed) {
     }
 }
 
+void trig_interrupt(){
+    run_interrupt = true;
+}
+
+void interrupt_routine() {
+    if (read_state() == 0) {
+        motor_drive(100);
+        write_state(1);
+    } else
+    {
+        motor_drive(-100);
+        write_state(0);
+    }
+}
+
 void setup() {
     Serial.begin(9600);
     // Set pin modes
@@ -60,7 +76,10 @@ void setup() {
     pinMode(PUSH_BUTTON_IN, INPUT_PULLUP);
 
     // stop motor
-    // TODO
+    motor_drive(0);
+
+    // Attach interrupt
+    attachInterrupt(0, trig_interrupt, FALLING);
 }
 
 void loop() {
