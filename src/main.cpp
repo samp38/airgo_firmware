@@ -1,1 +1,73 @@
-// main code here
+#include "Arduino.h"
+#include <EEPROM.h>
+#include "bsp.h"
+
+// Globals
+uint8_t global_state; // address 0x00
+
+int write_state(int state) {
+    if (state != 0 || state != 1) {
+        Serial.println("State write in EEPROM with not allowd value");
+        return 1;
+    }
+    EEPROM.update(0, state);
+    return 0;
+}
+
+uint8_t read_state() {
+    return EEPROM.read(0);
+}
+
+void motor_stop() {
+    digitalWrite(MOTOR_OUT_1, LOW);
+    digitalWrite(MOTOR_OUT_2, LOW);
+}
+
+void motor_drive(float speed) {
+    unsigned int abs_speed;
+    // if speed == 0, stop motor
+    if (speed == 0) {
+        motor_stop();
+        return;
+    }
+
+    // if speed is not 0, drive motor
+    if abs(speed > 100) {
+        speed = 100;
+    } else if (speed < -100)
+    {
+        speed = -100;
+    }
+    
+    abs_speed = (unsigned int) (abs(speed) * 255./100.);
+    
+    if (speed > 0) {
+        digitalWrite(MOTOR_OUT_1, 0);
+        analogWrite(MOTOR_OUT_2, abs_speed);
+    }
+    else
+    {
+        digitalWrite(MOTOR_OUT_2, 0);
+        analogWrite(MOTOR_OUT_1, abs_speed);
+    }
+}
+
+void setup() {
+    Serial.begin(9600);
+    // Set pin modes
+    pinMode(MOTOR_OUT_1, OUTPUT);
+    pinMode(MOTOR_OUT_2, OUTPUT);
+    pinMode(PUSH_BUTTON_IN, INPUT_PULLUP);
+
+    // stop motor
+    // TODO
+}
+
+void loop() {
+    for (float i = -100; i <= 100; i+=10)
+    {
+        Serial.println("Motor speed : " + String(i));
+        motor_drive(i);
+        delay(3000);
+    }
+}
