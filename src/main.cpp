@@ -58,6 +58,7 @@ void trig_interrupt(){
 }
 
 void interrupt_routine() {
+    run_interrupt = false;
     if (read_state() == 0) {
         motor_drive(100);
         write_state(1);
