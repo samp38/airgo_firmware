@@ -3,8 +3,11 @@
 #include "bsp.h"
 #include "LowPower.h"
 
+#define TIMER_SEC 15
+
 // Globals
 static volatile bool run_interrupt = 0;
+static volatile unsigned int timer_count_sec;
 
 
 int write_state(uint8_t state) {
@@ -55,6 +58,16 @@ void motor_drive(float speed) {
     }
 }
 
+void stop_timer() {
+    TIMSK1 |= (0 << TOIE1);   // disable timer overflow interrupt
+}
+
+void start_timer() {
+    TCNT1 = 31250;   // preload timer
+    timer_count_sec = TIMER_SEC;
+    TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
+}
+
 void trig_interrupt(){
     run_interrupt = 1;
 }
@@ -63,6 +76,7 @@ void interrupt_routine() {
     detachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_IN));
     run_interrupt = 0;
     Serial.println(read_state());
+    start_timer();
     if (read_state() == 0) {
         Serial.println("retracting");
         motor_drive(100);
@@ -94,6 +108,7 @@ void setup() {
     TCNT1 = 31250;   // preload timer
     TCCR1B |= (1 << CS12);    // 256 prescaler
     TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
+    stop_timer();
 
     interrupts();   
 
@@ -112,6 +127,12 @@ void loop() {
 
 ISR(TIMER1_OVF_vect)        // interrupt service routine every one second
 {
-    // Serial.println("C");
-    TCNT1 = 31250;   // preload timer   
+    TCNT1 = 31250;   // preload timer
+    timer_count_sec --;
+    if (timer_count_sec == 0) {
+        stop_timer();
+        Serial.println("TIMER FINISHED, going to sleep");
+        Serial.flush();
+        LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
+    }
 }
