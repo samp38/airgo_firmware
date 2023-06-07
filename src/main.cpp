@@ -3,10 +3,9 @@
 #include "bsp.h"
 
 // Globals
-uint8_t global_state; // address 0x00
 bool run_interrupt = false;
 
-int write_state(int state) {
+int write_state(uint8_t state) {
     if (state != 0 || state != 1) {
         Serial.println("State write in EEPROM with not allowd value");
         return 1;
@@ -60,10 +59,12 @@ void trig_interrupt(){
 void interrupt_routine() {
     run_interrupt = false;
     if (read_state() == 0) {
+        Serial.println("extending");
         motor_drive(100);
         write_state(1);
     } else
     {
+        Serial.println("retracting");
         motor_drive(-100);
         write_state(0);
     }
