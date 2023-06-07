@@ -84,10 +84,7 @@ void setup() {
 }
 
 void loop() {
-    for (float i = -100; i <= 100; i+=10)
-    {
-        Serial.println("Motor speed : " + String(i));
-        motor_drive(i);
-        delay(3000);
+    if (run_interrupt) {
+        interrupt_routine();
     }
 }
