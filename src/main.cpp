@@ -3,7 +3,7 @@
 #include "bsp.h"
 
 // Globals
-static volatile int run_interrupt = 0;
+static volatile bool run_interrupt = 0;
 
 
 int write_state(uint8_t state) {
@@ -59,21 +59,22 @@ void trig_interrupt(){
 }
 
 void interrupt_routine() {
-    detachInterrupt(0);
+    detachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_IN));
     run_interrupt = 0;
     Serial.println(read_state());
     if (read_state() == 0) {
-        Serial.println("extending");
+        Serial.println("retracting");
         motor_drive(100);
         write_state(1);
     } else
     {
-        Serial.println("retracting");
+        Serial.println("extending");
         motor_drive(-100);
         write_state(0);
     }
     delay(500);
-    attachInterrupt(0, trig_interrupt, FALLING);
+    EIFR |= 1 << INTF0;
+    attachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_IN), trig_interrupt, FALLING);
     run_interrupt = 0;
 }
 
@@ -88,12 +89,11 @@ void setup() {
     motor_drive(0);
 
     // Attach interrupt
-    attachInterrupt(0, trig_interrupt, FALLING);
+    attachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_IN), trig_interrupt, FALLING);
 }
 
 void loop() {
     if (run_interrupt) {
         interrupt_routine();
-        interrupts();
     }
 }
