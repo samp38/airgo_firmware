@@ -6,3 +6,6 @@
 - drive DC motor CW or CCW depending on state
 - state stored in eeprom
 - (optional) motor current monitoring via shunt resistor and avr ADC
+
+
+![alt text](./doc/Arduino_Pro_Mini_pinout.png)
