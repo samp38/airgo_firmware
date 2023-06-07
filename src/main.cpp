@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include <EEPROM.h>
 #include "bsp.h"
+#include "LowPower.h"
 
 // Globals
 static volatile bool run_interrupt = 0;
