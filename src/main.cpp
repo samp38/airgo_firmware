@@ -80,10 +80,21 @@ void interrupt_routine() {
 
 void setup() {
     Serial.begin(9600);
+    noInterrupts(); 
     // Set pin modes
     pinMode(MOTOR_OUT_1, OUTPUT);
     pinMode(MOTOR_OUT_2, OUTPUT);
     pinMode(PUSH_BUTTON_IN, INPUT_PULLUP);
+
+    // setup Timer1
+    TCCR1A = 0;
+    TCCR1B = 0;
+
+    TCNT1 = 31250;   // preload timer
+    TCCR1B |= (1 << CS12);    // 256 prescaler
+    TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
+
+    interrupts();   
 
     // stop motor
     motor_drive(0);
@@ -96,4 +107,10 @@ void loop() {
     if (run_interrupt) {
         interrupt_routine();
     }
+}
+
+ISR(TIMER1_OVF_vect)        // interrupt service routine every one second
+{
+    // Serial.println("C");
+    TCNT1 = 31250;   // preload timer   
 }
