@@ -19,8 +19,9 @@ OneButton button(PUSH_BUTTON_IN, true);
 
 
 void motor_stop() {
-    digitalWrite(MOTOR_OUT_1, LOW);
-    digitalWrite(MOTOR_OUT_2, LOW);
+    digitalWrite(MOTOR_EN, LOW);
+    digitalWrite(MOTOR_DIR, HIGH);
+    digitalWrite(MOTOR_DRIVER_PW, LOW);
 }
 
 void motor_drive(float speed) {
@@ -32,6 +33,7 @@ void motor_drive(float speed) {
     }
 
     // if speed is not 0, drive motor
+    digitalWrite(MOTOR_DRIVER_PW, HIGH);
     if abs(speed > 100) {
         speed = 100;
     } else if (speed < -100)
@@ -42,14 +44,13 @@ void motor_drive(float speed) {
     abs_speed = (unsigned int) (abs(speed) * 255./100.);
     
     if (speed > 0) {
-        digitalWrite(MOTOR_OUT_1, 0);
-        analogWrite(MOTOR_OUT_2, abs_speed);
+        digitalWrite(MOTOR_DIR, HIGH);
     }
     else
     {
-        digitalWrite(MOTOR_OUT_2, 0);
-        analogWrite(MOTOR_OUT_1, abs_speed);
+        digitalWrite(MOTOR_DIR, LOW);
     }
+    analogWrite(MOTOR_EN, abs_speed);
 }
 
 void stop_timer() {
