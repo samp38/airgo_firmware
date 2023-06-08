@@ -2,27 +2,21 @@
 #include <EEPROM.h>
 #include "bsp.h"
 #include "LowPower.h"
+#include "OneButton.h"
 
 #define TIMER_SEC 15
+#define DOUBLE_CLICK_MS 800
+#define LONG_PRESS_MS 1000
 
 // Globals
 static volatile bool run_interrupt = 0;
 static volatile unsigned int timer_count_sec;
+unsigned long pressStartTime;
 
+// Setup a new OneButton on pin PUSH_BUTTON_IN
+// The 2. parameter activeLOW is true, because external wiring sets the button to LOW when pressed.
+OneButton button(PUSH_BUTTON_IN, true);
 
-int write_state(uint8_t state) {
-    // if (state != 0 || state != 1) {
-    //     Serial.println(state);
-    //     Serial.println("State write in EEPROM with not allowed value");
-    //     return 1;
-    // }
-    EEPROM.update(0, state);
-    return 0;
-}
-
-uint8_t read_state() {
-    return EEPROM.read(0);
-}
 
 void motor_stop() {
     digitalWrite(MOTOR_OUT_1, LOW);
@@ -62,39 +56,45 @@ void stop_timer() {
     TIMSK1 |= (0 << TOIE1);   // disable timer overflow interrupt
 }
 
-void start_timer() {
+void start_timer(volatile unsigned int local_timer_count_sec = TIMER_SEC) {
     TCNT1 = 31250;   // preload timer
-    timer_count_sec = TIMER_SEC;
+    timer_count_sec = local_timer_count_sec;
     TIMSK1 |= (1 << TOIE1);   // enable timer overflow interrupt
 }
 
 void trig_interrupt(){
-    run_interrupt = 1;
+    // run_interrupt = 1;
+    button.tick(); // just call tick() to check the state.
 }
 
-void interrupt_routine() {
-    detachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_IN));
-    run_interrupt = 0;
-    Serial.println(read_state());
+// this function will be called when the button was pressed 1 time only.
+void singleClick() {
+    Serial.println("singleClick() detected.");
+    start_timer(1);
+    motor_drive(0);
+} // singleClick
+
+// this function will be called when the button was pressed 2 times in a short timeframe.
+void doubleClick() {
     start_timer();
-    if (read_state() == 0) {
-        Serial.println("retracting");
-        motor_drive(100);
-        write_state(1);
-    } else
-    {
-        Serial.println("extending");
-        motor_drive(-100);
-        write_state(0);
-    }
-    delay(500);
-    EIFR |= 1 << INTF0;
-    attachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_IN), trig_interrupt, FALLING);
-    run_interrupt = 0;
-}
+    Serial.println("doubleClick() detected.");
+    Serial.println("extending");
+    motor_drive(-100);
+} // doubleClick
+
+// this function will be called when the button was held down for 1 second or more.
+void longPress() {
+    start_timer();
+    pressStartTime = millis() - LONG_PRESS_MS; // as set in setPressMs()
+    // Serial.println("longPress()");
+    Serial.println("retracting");
+    motor_drive(100);
+} // pressStart()
+
 
 void setup() {
     Serial.begin(9600);
+    Serial.println("currently in setup");
     noInterrupts(); 
     // Set pin modes
     pinMode(MOTOR_OUT_1, OUTPUT);
@@ -117,12 +117,20 @@ void setup() {
 
     // Attach interrupt
     attachInterrupt(digitalPinToInterrupt(PUSH_BUTTON_IN), trig_interrupt, FALLING);
+
+    // button mngmt
+    // link the xxxclick functions to be called on xxxclick event.
+    button.attachClick(singleClick);
+    button.attachDoubleClick(doubleClick);
+
+    button.setClickMs(DOUBLE_CLICK_MS);
+    button.setPressMs(LONG_PRESS_MS); // that is the time when LongPressStart is called
+    button.attachLongPressStart(longPress);
+    // button.attachLongPressStop(pressStop);
 }
 
 void loop() {
-    if (run_interrupt) {
-        interrupt_routine();
-    }
+    button.tick();
 }
 
 ISR(TIMER1_OVF_vect)        // interrupt service routine every one second
