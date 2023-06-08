@@ -141,6 +141,7 @@ ISR(TIMER1_OVF_vect)        // interrupt service routine every one second
     timer_count_sec --;
     if (timer_count_sec == 0) {
         stop_timer();
+        motor_stop();
         Serial.println("TIMER FINISHED, going to sleep");
         Serial.flush();
         LowPower.powerDown(SLEEP_FOREVER, ADC_OFF, BOD_OFF);
