@@ -97,8 +97,9 @@ void setup() {
     Serial.begin(9600);
     noInterrupts(); 
     // Set pin modes
-    pinMode(MOTOR_OUT_1, OUTPUT);
-    pinMode(MOTOR_OUT_2, OUTPUT);
+    pinMode(MOTOR_DIR, OUTPUT);
+    pinMode(MOTOR_EN, OUTPUT);
+    pinMode(MOTOR_DRIVER_PW, OUTPUT);
     pinMode(PUSH_BUTTON_IN, INPUT_PULLUP);
 
     // setup Timer1
