@@ -95,7 +95,6 @@ void longPress() {
 
 void setup() {
     Serial.begin(9600);
-    Serial.println("currently in setup");
     noInterrupts(); 
     // Set pin modes
     pinMode(MOTOR_OUT_1, OUTPUT);
