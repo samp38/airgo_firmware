@@ -11,3 +11,5 @@
 - arduino mini pro 8Mhz
 - motor driver DVR8838
 ![alt text](./doc/Arduino_Pro_Mini_pinout.png)
+![alt text](./doc/schematics.pdf)
+![alt text](./doc/pcb.png)
