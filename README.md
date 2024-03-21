@@ -28,3 +28,4 @@ The system works on 7.4 Li-Ion battery, but the arduino mini pro is powered by o
 ![alt text](./doc/Arduino_Pro_Mini_pinout.png)
 
 ![alt text](./doc/pcb.png)
+![alt text](./doc/pcb2.png)
